@@ -1,14 +1,11 @@
-FindIntegrationAnchors函数是Seurat中用于整合多个单细胞数据集的步骤之一。它的作用是识别跨数据集的“锚点”（anchors），这些锚点代表不同数据集中被推测为来自相同生物学状态的细胞对（或细胞群）。这些锚点随后用于校正数据集之间的技术差异（如批次效应），使得数据可以整合在一起进行分析。
+FindIntegrationAnchors函数是Seurat中用于整合多个单细胞数据集的步骤之一。它的作用是识别跨数据集的“锚点”（anchors），这些锚点代表不同数据集中被推测为来自相同生物学状态的细胞对（或细胞群），随后用于校正数据集之间的技术差异（如批次效应），使得数据可以整合在一起进行分析。
 
 具体来说，该函数执行以下步骤：
 
-特征选择：首先，它使用在之前步骤中通过FindVariableFeatures找到的高变基因（默认是2000个）作为输入，因为这些基因包含更多的生物学信息。
-
-降维：对每个数据集进行PCA降维，使用共同的高变基因。然后，将这些PCA降维结果投射到一个共享的低维空间（通常使用CCA典型相关分析或PCA的相互最近邻方法，但Seurat v3默认使用CCA）。
-
-寻找锚点：在低维空间中，对每个数据集中的细胞，寻找跨数据集的最近邻。这些最近邻对就是候选锚点。然后，通过一系列过滤步骤（如评估共享最近邻的强度、锚点对之间的相似性等）来筛选出可靠的锚点。
-
-评分锚点：对每个锚点对进行评分，评估它们代表相同生物学状态的可能性。分数较低的锚点将被过滤掉。
++ 特征选择：首先，它使用在之前步骤中通过FindVariableFeatures找到的高变基因（默认是2000个）作为输入，因为这些基因包含更多的生物学信息。
++ 降维：对每个数据集进行PCA降维，使用共同的高变基因。然后，将这些PCA降维结果投射到一个共享的低维空间（通常使用CCA典型相关分析或PCA的相互最近邻方法，但Seurat v3默认使用CCA）。
++ 寻找锚点：在低维空间中，对每个数据集中的细胞，寻找跨数据集的最近邻。这些最近邻对就是候选锚点。然后，通过一系列过滤步骤（如评估共享最近邻的强度、锚点对之间的相似性等）来筛选出可靠的锚点。
++ 评分锚点：对每个锚点对进行评分，评估它们代表相同生物学状态的可能性。分数较低的锚点将被过滤掉。
 
 
 优化方法（减少耗时）：
@@ -56,27 +53,7 @@ plan("multicore", workers = 4)  # 使用4个核心
 
 # 然后运行FindIntegrationAnchors
 anchors <- FindIntegrationAnchors(seurat_list, dims=1:30)
-推荐的优化组合：
-r
-# 对于9个样本的整合
-anchors <- FindIntegrationAnchors(
-  object.list = seurat_list,
-  anchor.features = 2000,      # 使用2000个高变基因
-  scale = FALSE,               # 如果已标准化，设为FALSE
-  reduction = "rpca",          # 比CCA更快
-  l2.norm = TRUE,              # 对特征进行L2标准化
-  dims = 1:20,                 # 使用更少的维度
-  k.anchor = 10,              # 减少锚点数
-  verbose = TRUE              # 显示进度
-)
-监控进度和资源使用：
-r
-# 查看计算进度
-anchors <- FindIntegrationAnchors(
-  seurat_list, 
-  dims = 1:30,
-  verbose = TRUE
-)
+
 
 # 查看计算了多长时间
 system.time({
@@ -87,22 +64,54 @@ system.time({
 anchors
 替代方案（如果仍然太慢）：
 使用Harmony或Scanorama：这些工具通常比Seurat整合更快
-
 分批处理：将样本分组整合，然后再整合结果
 
-云计算：使用AWS/GCP等云服务的高内存实例
 
 注意事项：
 不要过度减少dims：维度太少可能导致整合效果不佳
-
 保持足够的锚点：太少的锚点可能无法正确对齐细胞类型
-
 监控整合质量：整合后检查不同样本的细胞是否混合良好
+整合步骤虽然耗时，但对后续分析至关重要，因为它可以去除批次效应，允许跨样本比较，提高细胞类型识别的准确性。
 
-整合步骤虽然耗时，但对后续分析至关重要，因为它可以：
+FAN版改动1：PCA中ElblowPlot选择拐点
+############################################################
+# PART4. PCA
+############################################################
+obj_pca <- RunPCA(obj_scl, 
+                  features = VariableFeatures(obj_scl),
+                  npcs = 50,                  # 先算50个，足够选拐点
+                  verbose = FALSE)
 
-去除批次效应
+# 定量确定 PC 数量
+pct <- obj_pca[["pca"]]@stdev / sum(obj_pca[["pca"]]@stdev) * 100
+cumu <- cumsum(pct)
 
-允许跨样本比较
+co1 <- which(cumu >= 90 & pct < 5)[1]  # 累计解释方差 >=90% 且单个PC <5%
+co2 <- sort(which(diff(pct) < -0.1), decreasing = TRUE)[1] + 1  # 更稳定的拐点检测方式
+pc.use <- min(co1, co2, na.rm = TRUE)
+if(is.na(pc.use)) pc.use <- 20  # 防止极端情况NA，备用值
 
-提高细胞类型识别的准确性
+print(paste("Suggested number of PCs:", pc.use))  # 你已经看到是22
+
+# 自定义 ElbowPlot（修正颜色名称）
+Elbowplot <- ElbowPlot(obj_pca, ndims = 50)$data %>% 
+  ggplot(aes(x = dims, y = stdev)) +
+  geom_point(size = 1.5) +
+  geom_vline(xintercept = pc.use, color = "darkred", linetype = "dashed", size = 1) +
+  theme_bw(base_size = 14) +
+  labs(title = "Elbow plot: quantitative approach",
+       x = "Principal Components",
+       y = "Standard Deviation")
+
+# 保存两张图（确保 outdir 已定义）
+save_plot("P4.1_PCA_plot.png", DimPlot(obj_pca, reduction = "pca", dims = 1:2))
+
+save_plot("P4.2_ElbowPlot.png", Elbowplot)
+
+# 可选：再保存一个带PC数的标注版本
+Elbowplot_annotated <- Elbowplot + 
+  annotate("text", x = pc.use + 3, y = max(obj_pca[["pca"]]@stdev)*0.9,
+           label = paste("Use", pc.use, "PCs"), color = "darkred", size = 5)
+
+save_plot("P4.2_ElbowPlot_annotated.png", Elbowplot_annotated)
+额外说明与改进点
