@@ -2,7 +2,7 @@
 # SG_scRNA_Seq_FLOW_V2
 # Batch-Processing + Plot Auto-Export + SingleR
 # EDIT_by_Sengene/Ribosome
-# Update_DATE202512151445
+# Update_DATE202512111752
 #############################################
 
 ############################################################
@@ -14,7 +14,7 @@ rm(list = ls()); gc()
 ############################################################
 # E1. BASIC SETTINGS
 ############################################################
-base_dir <- "/ur/dir/PATH"
+base_dir <- "/ur/local/PATH"
 setwd(base_dir)
 dir.create("Ana_res2", showWarnings = FALSE)
 outdir <- file.path(base_dir, "Ana_res2")
@@ -65,9 +65,9 @@ library(purrr)
 ############################################################
 # PART1. DATA IMPORT (BATCH) & MERGING
 ############################################################
-sample_folders <- c("sham1","sham2","sham3",
+sample_folders <- c("sample1","sham2","sham3",
                     "model1","model2","model3",
-                    "SLTNF1","SLTNF2","SLTNF3")
+                    "Treat1","Treat2","Treat3")
 
 data_dir <- base_dir
 seurat_list <- list()
@@ -141,7 +141,7 @@ HB.genes_total <- get_HB_genes("mouse")
 hb_present <- HB.genes_total[HB.genes_total %in% rownames(obj_int)]
 obj_int[["percent.HB"]] <- PercentageFeatureSet(obj_int, features = hb_present)
 
-# QC 图
+# QC_plots
 save_plot("P2.1_QC_violin.png",
           VlnPlot(obj_int, features=c("nFeature_RNA","nCount_RNA","percent.mt","percent.HB"), ncol=4))
 
@@ -199,8 +199,14 @@ save_plot("P4.2_ElbowPlot.png", Elbowplot)
 ############################################################
 # PART5. CLUSTERING + UMAP+ARI
 ##ARI (Adjusted Rand Index)
-##ref_PMID:39294367
+##ref_PMID:39294367       
 ############################################################
+
+#Auxiliary_tool: Cluster_tree assists in selecting resolution values
+obj_pca <- FindClusters(object = obj_pca,resolution = c(seq(.1,1.6,.2))) 
+res_sel <-clustree(obj_pca@meta.data, prefix = "RNA_snn_res.")
+
+save_plot("P5.1_Resolution_selecting2.png",res_sel,h=3200)
 
 P5_clustering_umap_module <- function(
     seurat_obj,
@@ -331,12 +337,12 @@ obj_pca <- P5_res$seurat_obj
 # PART6. Marker
 ############################################################
 markers <- FindAllMarkers(obj_pca, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.csv(markers, file.path(outdir, "P6.Markers_all_clusters.csv"))
+write.csv(markers, file.path(outdir, "Markers_all_clusters.csv"))
 
 ############################################################
-# PART7. SingleR_Anno
+# PART7. SingleR_anno
 ############################################################
-ref <- MouseRNAseqData()   # for mouse（homo should be change to HPCA）
+ref <- MouseRNAseqData()   #for mouse. should_be_change_to_HPCA_for_homo
 obj_sce <- as.SingleCellExperiment(obj_pca)
 
 pred <- SingleR(test = obj_sce,
@@ -351,6 +357,6 @@ save_plot("P7.SingleR_annotation.png",
 ############################################################
 # PART8. SAVE OBJECT
 ############################################################
-saveRDS(obj_pca, file.path(outdir, "P8.Final_Integrated_Object.rds"))
+saveRDS(obj_pca, file.path(outdir, "Final_Integrated_Object.rds"))
 
 message("==== Pipeline finished ====")
