@@ -607,7 +607,7 @@ output:
 ## 1.scRNA分析简介</br>
 ### 1.1单细胞测序基本原理
 
-### 1.2WGCNA分析操作步骤</br>
+### 1.单细胞测序分析操作步骤</br>
 具体地说，参照上面的原理，本次分析依次进行了以下操作：</br>
 * 数据输入、清洗和预处理
   + 载入数据
@@ -618,21 +618,15 @@ output:
   + 参数设置
   + 一步法构建网络和模块检测
 </br>
-* 模块与表型数据关联并识别重要基因
-  + 模块-表型数据关联
-  + 基因与表型数据的关系(GS)和重要模块(MM):基因显著性和模块成员
-  + 模块内分析：鉴定具有高GS和高MM的基因
-  + 输出网络分析结果
 </br>
 * 网络交互分析（GO注释等）</br>
 
 ## 2.数据集信息</br>
-本次分析使用数据集为GSE180857，分组信息及样本信息见GEO数据库。</br></br>
+</br></br>
 
 ## 3.材料与方法</br>
 
-WGCNA(weighted gene co-expression network analysis，权重基因共表达网络分析)
-使用R4.3.1进行WGCNA分析。WGCNA进行共表达网络分析。构建'unsigned'网络，'pearsoon'法计算排序后的特征基因模块（MEs_col）与性状数据(traitData)间的相关性。在兴趣模块基因中筛选用于后续分析的相关基因。</br>
+</br>
 
 ## 4.文章引用与致谢</br>
 如果您的研究课题使用了三君科技的测序和分析服务，您在论文发表时，在Method部分或Acknowledgements部分引用或提及三君科技，是对我们工作的认可，我们表示衷心感谢。以下语句可供参考：
@@ -647,63 +641,6 @@ We are grateful to thank Guangzhou Sengene Technology Co., Ltd for assisting in 
 </br>
 
 ## 5.分析结果</br>
-使用测序后Count值数据作为输入文件，原始数据中共有",
-                      dim(rawdat)[1],"个基因。原始进行数据清洗（注释，去重，过滤低表达基因（保留至少80%样本中Count>10））后，剩余基因数为",
-                      nrow(count_matrix),"，随后进行log2_VST转置，作为WGCNA输入矩阵。WGCNA分析具体参数如下：flodChange:",
-                      foldChange,",padj:",padj,",筛选中位绝对偏差前65%的基因,基因数量为:",dim(dataExprVar1)[1],
-                      "构建无标度网络,软阈值为",power,",共分为",ncol(net$MEs),"个模块,根据模块与表型相关分析，选取表型为",pheno,"的模块ME",module,
-                      "作为后续研究内容。
-
-###5.1样本聚类分析</br>
-```{r fig1, echo=FALSE}
-knitr::include_graphics(file.path(DIR05,'S1sampletree.png'))
-```
-
->Fig.1 Sample clustering and outliersc detection .</br>
-图一.样本聚类图。通过对",dim(exprDat)[2],"个样本进行聚类分析，未见异常离群样品，继续进行后续分析。</br>
-
-
-###4.2软阈值筛选</br>
-```{r fig2, echo=FALSE}
-knitr::include_graphics(file.path(DIR05,'S2Soft threshold.png'))
-```
-
->Fig.2 Soft Threshold screening.</br>
-图二.软阈值筛选。本次分析通过绘制样品聚类查看分组信息和有无异常样品后，获得经验性软阈值为",power,"，符合无向网络取值，可继续后续分析。</br>
-
-###4.3基因筛选及模块构建</br>
-```{r fig3, echo=FALSE}
-knitr::include_graphics(file.path(DIR05,'S3Module colors.png'))
-```
-
->Fig.3 Cluster Dendrogram and module construction.</br>
-图三.基因筛选及模块构建。将表达谱中的所有基因进行筛选，选取中位绝对偏差前65%的基因，得到",dim(dataExprVar1)[1],"个差异表达基因，共构建52个模块。其中grey灰色为未分入任何模块的基因。
-
-
-###4.4层级聚类树及特征基因邻接分析</br>
-```{r fig4, echo=FALSE}
-knitr::include_graphics(file.path(DIR05,'S4Eigengene adjacency heatmap.png'))
-```
-
->Fig.4 Eigengene adjacency heatmap</br>
-图4.层级聚类树及特征基因邻接热图。根据基因间表达量进行聚类所得到的各模块间的相关性图，构建共表达网络，划分模块，合并相似模块。
-
-###4.5模块与分组表型数据关联分析</br>
-```{r fig5, echo=FALSE}
-knitr::include_graphics(file.path(DIR05,'/S5Module-trait relationships.png'))
-```
-
->Fig.5 Modules and phenotype association</br>
-图五.模块与分组表型数据关联分析。根据数据集分类，将带“NC”标签的样品归为对照组（NC），将带“polysaccharide1”标签的样品归为干预组（polysaccharide1）将带“polysaccharide2”标签的样品归为干预组（polysaccharide2），进行表型与模块关联分析。将相关系数（negative correlation coefficient）为0.88, p = 0.002的ME",module,"模块，选为兴趣模块，重点关注",pheno,"组。
-
-
-###4.6兴趣模块基因分布及基因显著性</br>
-```{r fig6, echo=FALSE}
-knitr::include_graphics(file.path(DIR05,'S7GSMM.png'))
-```
-
->Fig.6 Module membership and gene significance.</br>
-图6.兴趣模块基因分布及基因显著性。提取MEturquoise模块中polysaccharide2组基因，设制条件为GS > 0.75 & MM > 0.75筛选出与性状高度相关的基因，也是与性状相关的模型的关键基因进行分布展示，共有222个基因与“ polysaccharide2”表型显著相关，即与NC相比，222个基因变化与MCAO呈正相关。
 
 #```{r fig7, echo=FALSE}
 #knitr::include_graphics(file.path(DIR06,'/ALL/ALLstring_hires_image.png'))
@@ -722,14 +659,6 @@ knitr::include_graphics(file.path(DIR05,'S7GSMM.png'))
 #GO:0097345	Mitochondrial outer membrane permeabilization，
 #GO:0010917	Negative regulation of mitochondrial membrane potential，
 #GO:0071456	Cellular response to hypoxia，其中Dram1,Bnip3l,Bmf,Bnip3参与GO:0010506	Regulation of autophagy，可作为后续研究通路。
-
-
-[^WGCNAP1]:Langfelder P, Horvath S. WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics. 2008;9:559. Published 2008 Dec 29. doi:10.1186/1471-2105-9-559IF:
-        
-        
-        
-         2.9 Q1
-
 ")
 
 setwd(DIR00)
