@@ -1,15 +1,15 @@
 ### 1.当前pipeline的一些内容说明
 当前R脚本是一个用于处理单细胞 RNA 测序 (scRNA-seq) 数据的自动化管道。脚本逻辑遵循标准的 Seurat v5 工作流程，但包含批次整合、质量控制 (QC)、降维、聚类、标记基因识别和细胞类型注释等步骤。整体结构如下：
 
-环境设置 (E0-E2)：清除环境、设置目录、定义绘图保存函数，并加载必要的 R 包（如 Seurat、Harmony 等，有些包未使用）。
-数据导入与合并 (PART1)：循环加载多个样本的 10X 矩阵，创建 Seurat 对象，添加元数据 (样本/组别)，逐样本归一化和高变基因 (HVG) 识别，然后使用 FindIntegrationAnchors 和 IntegrateData 进行批次整合，得到整合对象 obj_int。
-质量控制 (PART2)：切换到 RNA assay，计算线粒体 (mt) 和血红蛋白 (HB) 百分比，绘制 QC 小提琴图，并基于硬编码阈值过滤细胞。
-归一化与 HVG (PART3)：对 QC 后对象重新归一化、识别 HVG 和缩放数据。
-PCA 与 Elbow 图 (PART4)：运行 PCA，基于方差累计 (90%) 和下降点定量选择 PC 数量，绘制 PCA 和标注的 Elbow 图。
-聚类与 UMAP (PART5)：运行多分辨率聚类，绘制 clustree 图辅助选择分辨率，然后使用自定义函数 P5_clustering_umap_module 选择主/子分辨率，进行邻域查找、聚类、UMAP，并绘制结果。包含安全检查（如主/子聚类不相同）。
-标记基因 (PART6)：使用 FindAllMarkers 找出每个聚类的正向标记基因，并保存 CSV。
-细胞类型注释 (PART7)：转换为 SingleCellExperiment，使用 SingleR 进行注释（但引用了小鼠参考），添加元数据并绘制。
-保存对象 (PART8)：保存最终 Seurat 对象为 RDS。
+环境设置 (E0-E2)：清除环境、设置目录、定义绘图保存函数，并加载必要的 R 包（如 Seurat、Harmony 等，有些包未使用）。</br>
+数据导入与合并 (PART1)：循环加载多个样本的 10X 矩阵，创建 Seurat 对象，添加元数据 (样本/组别)，逐样本归一化和高变基因 (HVG) 识别，然后使用 FindIntegrationAnchors 和 IntegrateData 进行批次整合，得到整合对象 obj_int。</br>
+质量控制 (PART2)：切换到 RNA assay，计算线粒体 (mt) 和血红蛋白 (HB) 百分比，绘制 QC 小提琴图，并基于硬编码阈值过滤细胞。</br>
+归一化与 HVG (PART3)：对 QC 后对象重新归一化、识别 HVG 和缩放数据。</br>
+PCA 与 Elbow 图 (PART4)：运行 PCA，基于方差累计 (90%) 和下降点定量选择 PC 数量，绘制 PCA 和标注的 Elbow 图。</br>
+聚类与 UMAP (PART5)：运行多分辨率聚类，绘制 clustree 图辅助选择分辨率，然后使用自定义函数 P5_clustering_umap_module 选择主/子分辨率，进行邻域查找、聚类、UMAP，并绘制结果。包含安全检查（如主/子聚类不相同）。</br>
+标记基因 (PART6)：使用 FindAllMarkers 找出每个聚类的正向标记基因，并保存 CSV。</br>
+细胞类型注释 (PART7)：转换为 SingleCellExperiment，使用 SingleR 进行注释（但引用了小鼠参考），添加元数据并绘制。</br>
+保存对象 (PART8)：保存最终 Seurat 对象为 RDS。</br>
 
 ##### 1.1批量数据处理原则
 ###### 使用FindIntegrationAnchors函数整合多个单细胞数据集。
