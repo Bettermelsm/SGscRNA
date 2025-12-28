@@ -62,6 +62,129 @@ library(data.table)
 library(mclust) 
 library(purrr)
 
+#2.7DIY_choose_resolution
+choose_resolution <- function(
+  seurat_obj,
+  res_prefix = "RNA_snn_res.",
+  min_main_ARI = 0.9,
+  min_sub_ARI  = 0.75,
+  min_main_size = 50,
+  min_sub_size  = 20,
+  smooth_k = 3
+) {
+  
+  suppressPackageStartupMessages({
+    library(dplyr)
+    library(purrr)
+    library(mclust)
+    library(zoo)
+  })
+  
+  #-----------------------------
+  # S1. Extract resolution info
+  #-----------------------------
+  meta <- seurat_obj@meta.data
+  res_cols <- grep(paste0("^", res_prefix), colnames(meta), value = TRUE)
+  
+  resolutions <- sort(as.numeric(sub(res_prefix, "", res_cols)))
+  
+  #-----------------------------
+  # S2. ARI between adjacent resolutions
+  #-----------------------------
+  ari_df <- map_dfr(
+    1:(length(resolutions) - 1),
+    function(i) {
+      r1 <- paste0(res_prefix, resolutions[i])
+      r2 <- paste0(res_prefix, resolutions[i + 1])
+      
+      data.frame(
+        res_low  = resolutions[i],
+        res_high = resolutions[i + 1],
+        ARI = adjustedRandIndex(
+          as.vector(meta[[r1]]),
+          as.vector(meta[[r2]])
+        )
+      )
+    }
+  )
+  
+  # smooth ARI to suppress noise
+  ari_df$ARI_smooth <- rollmean(
+    ari_df$ARI,
+    k = smooth_k,
+    fill = NA,
+    align = "center"
+  )
+  
+  #-----------------------------
+  # S3. Cluster statistics
+  #-----------------------------
+  cluster_stats <- map_dfr(
+    resolutions,
+    function(r) {
+      cl <- meta[[paste0(res_prefix, r)]]
+      tab <- table(cl)
+      
+      data.frame(
+        resolution = r,
+        n_clusters = length(tab),
+        min_size   = min(tab),
+        median_size = median(tab)
+      )
+    }
+  )
+  
+  df <- left_join(
+    ari_df,
+    cluster_stats,
+    by = c("res_high" = "resolution")
+  )
+  
+  #-----------------------------
+  # S4. Main resolution (stable plateau)
+  #-----------------------------
+  main_candidates <- df %>%
+    filter(
+      ARI_smooth >= min_main_ARI,
+      min_size >= min_main_size
+    )
+  
+  if (nrow(main_candidates) == 0) {
+    main_res <- NA
+  } else {
+    # choose median of stable region (NOT the first one)
+    main_res <- median(main_candidates$res_high)
+  }
+  
+  #-----------------------------
+  # S5. Subcluster resolution (before ARI drop)
+  #-----------------------------
+  df$ARI_drop <- c(NA, diff(df$ARI_smooth))
+  
+  sub_candidates <- df %>%
+    filter(
+      ARI_smooth >= min_sub_ARI,
+      min_size >= min_sub_size
+    )
+  
+  if (nrow(sub_candidates) == 0) {
+    sub_res <- NA
+  } else {
+    # last stable resolution before clear drop
+    sub_res <- sub_candidates$res_high[
+      which.max(sub_candidates$res_high)
+    ]
+  }
+  
+  #-----------------------------
+  # Output
+  #-----------------------------
+  return(list(
+    main_res = main_res,
+    sub_res  = sub_res,
+    metrics  = df
+  ))
+}
 ############################################################
 # PART1. DATA IMPORT (BATCH) & MERGING
 ############################################################
