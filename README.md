@@ -1,4 +1,4 @@
-### 1.当前pipeline的一些内容说明
+#### 1.当前pipeline的一些内容说明
 当前R脚本是一个用于处理单细胞 RNA 测序 (scRNA-seq) 数据的自动化管道。脚本逻辑遵循标准的 Seurat v5 工作流程，但包含批次整合、质量控制 (QC)、降维、聚类、标记基因识别和细胞类型注释等步骤。整体结构如下：
 
 + 环境设置 (E0-E2)：清除环境、设置目录、定义绘图保存函数，并加载必要的 R 包。</br>
@@ -129,6 +129,10 @@ save_plot("P4.2_ElbowPlot_annotated.png", Elbowplot_annotated)
 
 ### FAN版改动2：CLUSTERING和UMAP中引入ARI作为客观指标
 #### ARI引入 ref_PMID:39294367
+        
+        
+        
+        
 #### 方法学说明：
 “Clustering resolutions were selected using adjusted Rand index (ARI) stability analysis. 
 Main and sub-clustering were visualized explicitly using resolution-specific metadata columns to avoid identity reuse artifacts.”
@@ -148,3 +152,9 @@ P5_res <- P5_clustering_umap_module(
 
 obj_pca <- P5_res$seurat_obj
 ```
+
+#####流程使用过程中的细节要点
+#如果你的默认 Assay 是 RNA，聚类列名就是 RNA_snn_res.0.5。
+#如果你的默认 Assay 是 integrated，聚类列名就是 integrated_snn_res.0.5。
+#如果你的默认 Assay 是 SCT，聚类列名就是 SCT_snn_res.0.5。
+
