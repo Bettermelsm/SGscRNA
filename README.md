@@ -128,10 +128,7 @@ save_plot("P4.2_ElbowPlot_annotated.png", Elbowplot_annotated)
 ```
 
 ### FAN版改动2：CLUSTERING和UMAP中引入ARI作为客观指标
-#### ARI引入 ref_PMID:39294367
-        
-        
-        
+#### ARI引入 ref_PMID: 39294367       
         
 #### 方法学说明：
 “Clustering resolutions were selected using adjusted Rand index (ARI) stability analysis. 
@@ -153,8 +150,8 @@ P5_res <- P5_clustering_umap_module(
 obj_pca <- P5_res$seurat_obj
 ```
 
-#####流程使用过程中的细节要点
-#如果你的默认 Assay 是 RNA，聚类列名就是 RNA_snn_res.0.5。
-#如果你的默认 Assay 是 integrated，聚类列名就是 integrated_snn_res.0.5。
-#如果你的默认 Assay 是 SCT，聚类列名就是 SCT_snn_res.0.5。
+##### 流程使用过程中的细节要点
+>如果默认 Assay 是 RNA，聚类列名就是 RNA_snn_res.0.5。</br>
+如果默认 Assay 是 integrated，聚类列名就是 integrated_snn_res.0.5。</br>
+如果默认 Assay 是 SCT，聚类列名就是 SCT_snn_res.0.5。</br>
 
