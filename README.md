@@ -128,7 +128,9 @@ save_plot("P4.2_ElbowPlot_annotated.png", Elbowplot_annotated)
 ```
 
 ### FAN版改动2：CLUSTERING和UMAP中引入ARI作为客观指标
-#### ARI引入 ref_PMID: 39294367       
+#### ARI引入 ref_PMID: 39294367
+        
+               
         
 #### 方法学说明：
 “Clustering resolutions were selected using adjusted Rand index (ARI) stability analysis. 
@@ -155,3 +157,7 @@ obj_pca <- P5_res$seurat_obj
 如果默认 Assay 是 integrated，聚类列名就是 integrated_snn_res.0.5。</br>
 如果默认 Assay 是 SCT，聚类列名就是 SCT_snn_res.0.5。</br>
 
+
+####V2.2版本改动要点
+>1.整合前完成质控。核心原理：整合算法（如Seurat的IntegrateData）通过锚点（anchors） 将不同批次的细胞投影到共享空间。这些锚点在整合时已固定，后续过滤细胞会破坏锚点与细胞的对应关系，导致assay内部结构不一致。
+2.将物种定义提前，定义SPEICES后适用于RBC去除及后续SingleR注释。
