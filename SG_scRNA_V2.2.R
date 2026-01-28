@@ -277,6 +277,11 @@ obj_int[["percent.HB"]] <- PercentageFeatureSet(obj_int, features = hb_present)
 save_plot("P2.1_QC_violin.png",
           VlnPlot(obj_int, features=c("nFeature_RNA","nCount_RNA","percent.mt","percent.HB"), ncol=4))
 
+#Filtering (parameterized, available for Django frontend input)#
+obj_qc <- subset(obj_int, subset = 
+                   nFeature_RNA > 300 &
+                   nFeature_RNA < 6000 &
+                   percent.mt < 10)
 ############################################################
 # PART3.PRE-PROCESSING & SCALE
 ############################################################
