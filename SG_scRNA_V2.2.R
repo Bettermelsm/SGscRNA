@@ -1,5 +1,5 @@
 #############################################
-# SG_scRNA_Seq_FLOW_V2.1
+# SG_scRNA_Seq_FLOW_V2.2
 # Batch-Processing + Plot Auto-Export + SingleR
 # EDIT_by_Sengene/Ribosome
 # Update_DATE202601100055
